@@ -13,6 +13,7 @@
 #include <vector>
 
 #include "mcl/SHA256.h"
+#include <math.h>
 
 using namespace mcl::bn256;
 
@@ -27,10 +28,12 @@ void Hash_pk(G1& P, const G2& pk)
 std::string Hash_1(const std::string& m)
 {
 	// {0,1}^* (String) --> {0,1}^{\ell} (String)
+	int ell = 240;
+	int sub = floor((256 - ell) / 4.0);
 	SHA256 sha;
 	sha.update(m);
 	uint8_t * hashvalue = sha.digest();
-	return SHA256::toString(hashvalue);
+	return SHA256::toString(hashvalue).substr(sub);	// return ell bits strings
 }
 
 void Hash_2(G1& P, const std::string& m)
