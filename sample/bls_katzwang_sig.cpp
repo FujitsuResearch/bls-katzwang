@@ -11,9 +11,11 @@
 #include <iostream>
 #include <sstream>
 #include <vector>
+#include <chrono>
+#include <math.h>
+#include <errno.h>
 
 #include "mcl/SHA256.h"
-#include <math.h>
 
 using namespace mcl::bn256;
 
@@ -57,7 +59,6 @@ std::string compute_h(std::string& m, const std::vector<G2>& pk_list, const std:
 	std::string tmp;
 	tmp = m;
 	for(auto& itr: pk_list){
-		std::cout << "public key: " << itr << std::endl;
 		tmp += itr.getStr();
 	}
 	for(auto& itr: r_list){
@@ -112,23 +113,28 @@ bool Verify(const G1& sigma, const std::string& h, const G2& Q, const G2& pk, co
 	Hash_2(Hm, m + h);
 	pairing(e1, sigma, Q); // e1 = e(sigma, Q)
 	pairing(e2, Hm, pk); // e2 = e(Hm, sQ)
-	// For debug
+	// for debug
 	// std::cout << "e1. " << e1 << std::endl;
 	// std::cout << "e2. " << e2 << std::endl;
 
 	return e1 == e2;
 }
 
-int main(int argc, char *argv[])
+int main()
 {
-	std::string m = argc == 1 ? "hello mcl" : argv[1];
-	std::string h;
+	// input
+	std::string m;
+	int N;
+	std::cout << "Type your message." << std::endl;
+	std::cin >> m;
+	std::cout << "Type the number of signers." << std::endl;
+	std::cin >> N;
 
 	// setup parameter
 	initPairing();
 	G2 Q;
 	mapToG2(Q, 1);
-	int N = 10; // Number of signers
+	std::string h;
 
 	// key list
 	int i;
@@ -137,25 +143,31 @@ int main(int argc, char *argv[])
 	std::vector<G1> pi_list;
 	std::vector<G1> sigma_list;
 	
+	// KeyGen
+	auto start = std::chrono::system_clock::now();
 	for(i = 0; i < N; i++ ){
 		Fr sk;
 		G2 pk;
 		G1 pi;
-
-		// KeyGen
 		KeyGen(sk, pk, pi, Q);
 		sk_list.push_back(sk);
 		pk_list.push_back(pk);
 		pi_list.push_back(pi);
-		std::cout << "Signer. " << i << std::endl;
-		std::cout << "secret key: " << sk << std::endl;
-		std::cout << "public key: " << pk << std::endl;
-		std::cout << "PoPs: " << pi << std::endl;
+		// for debug
+		// std::cout << "Signer. " << i << std::endl;
+		// std::cout << "secret key: " << sk << std::endl;
+		// std::cout << "public key: " << pk << std::endl;
+		// std::cout << "PoPs: " << pi << std::endl;
 	}
+	auto end = std::chrono::system_clock::now();
+	auto dur = end - start;
+	auto msec = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
+	std::cout << "KeyGen Time: " << msec << " [ms]" << std::endl;
 	
-	std::vector<Fr> r_list;
-
+	// Signing
+	start = std::chrono::system_clock::now();
 	//Round 1
+	std::vector<Fr> r_list;
 	for(i = 0; i < N; i++ ){
 		Fr r;
 		r.setRand();
@@ -164,36 +176,53 @@ int main(int argc, char *argv[])
 
 	//Round 2
 	h = compute_h(m, pk_list, r_list); // h = H(m || pk1 || ... || pk_N || r_1 || ... || r_N)
-	std::cout << "h: " << h << std::endl;
 
 	//Round 3
 	for(i = 0; i < N; i++ ){
 		// Sign
 		G1 sigma;
 		Fr sk = sk_list[i];
-
 		Sign(sigma, h, sk, m);
-		std::cout << "msg: " << m << std::endl;
-		std::cout << "signature: " << sigma << ", " << h << std::endl;
 		sigma_list.push_back(sigma);
-
-		G2 pk = pk_list[i];
-		// Individual verify
-		bool ok = Verify(sigma, h, Q, pk, m);
-		std::cout << "verification result :" << (ok ? "Success" : "Failed") << std::endl;
+		// for debug
+		// std::cout << "msg: " << m << std::endl;
+		// std::cout << "signature: " << sigma << ", " << h << std::endl;
+		
+		// // Individual signatures verify
+		// G2 pk = pk_list[i];
+		// bool ok = Verify(sigma, h, Q, pk, m);
+		// std::cout << "verification result :" << (ok ? "Success" : "Failed") << std::endl;
 	}
-
+	end = std::chrono::system_clock::now();
+	dur = end - start;
+	msec = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
+	std::cout << "Signing Time: " << msec << " [ms]" << std::endl;
+	
 	// Aggregate Signature
 	G1 sigma_agg;
+	start = std::chrono::system_clock::now();
 	AggSig(sigma_agg, sigma_list);
-	std::cout << "aggregated signature: " << sigma_agg << std::endl;
+	end = std::chrono::system_clock::now();
+	dur = end - start;
+	msec = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
+	std::cout << "Signature Aggregation Time: " << msec << " [ms]" << std::endl;
+	
+	// for debug
+	//std::cout << "aggregated signature: " << sigma_agg << std::endl;
 
 	// Aggregated Publickey
 	G2 pk_agg;
+	start = std::chrono::system_clock::now();
 	AggKey(pk_agg, pk_list, pi_list, Q);
-	std::cout << "aggregated public key: " << pk_agg << std::endl;
+	end = std::chrono::system_clock::now();
+	dur = end - start;
+	msec = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
+	std::cout << "Key Aggregation Time: " << msec << " [ms]" << std::endl;
+	
+	// for debug
+	// std::cout << "aggregated public key: " << pk_agg << std::endl;
 
-	// For debug: check publickey
+	// for debug: check publickey
 	// Fr sk_agg;
 	// sk_agg = 0;
 	// for(auto& itr:sk_list){
@@ -204,7 +233,11 @@ int main(int argc, char *argv[])
 	// std::cout << "Aggregated public key2: " << pk_agg_d << std::endl;
 
 	// Verify
+	start = std::chrono::system_clock::now();
 	bool ok = Verify(sigma_agg, h, Q, pk_agg, m);
+	end = std::chrono::system_clock::now();
+	dur = end - start;
+	msec = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
+	std::cout << "Verification Time: " << msec << " [ms]" << std::endl;
 	std::cout << "verification result :" << (ok ? "Success" : "Failed") << std::endl;
-
 }
