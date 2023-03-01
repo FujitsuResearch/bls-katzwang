@@ -8,9 +8,12 @@ GRTAGS
 GTAGS
 *.o
 *.d
+*.S
 *.exe
 *.swp
+*.pyc
 .cvsignore
 build/
 external/
 Testing/
+bin/

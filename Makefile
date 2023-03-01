@@ -28,6 +28,7 @@ ifeq ($(CPU),x86-64)
   endif
 endif
 SAMPLE_SRC=bench.cpp ecdh.cpp random.cpp rawbench.cpp vote.cpp pairing.cpp tri-dh.cpp bls_sig.cpp pairing_c.c she_smpl.cpp mt_test.cpp
+SAMPLE_SRC+=bls_katzwang_sig.cpp
 #SAMPLE_SRC+=large.cpp # rebuild of bint is necessary
 
 ifneq ($(MCL_MAX_BIT_SIZE),)
@@ -69,7 +70,8 @@ SHE384_SLIB=$(LIB_DIR)/lib$(SHE384_SNAME).$(LIB_SUF)
 SHE384_256_LIB=$(LIB_DIR)/libmclshe384_256.a
 SHE384_256_SLIB=$(LIB_DIR)/lib$(SHE384_256_SNAME).$(LIB_SUF)
 SHE_LIB_ALL=$(SHE256_LIB) $(SHE256_SLIB) $(SHE384_LIB) $(SHE384_SLIB) $(SHE384_256_LIB) $(SHE384_256_SLIB)
-all: $(MCL_LIB) $(MCL_SLIB) $(BN256_LIB) $(BN256_SLIB) $(BN384_LIB) $(BN384_SLIB) $(BN384_256_LIB) $(BN384_256_SLIB) $(BN512_LIB) $(BN512_SLIB) $(SHE_LIB_ALL)
+SHA256_LIB=$(LIB_DIR)/libsha256.a
+all: $(MCL_LIB) $(MCL_SLIB) $(BN256_LIB) $(BN256_SLIB) $(BN384_LIB) $(BN384_SLIB) $(BN384_256_LIB) $(BN384_256_SLIB) $(BN512_LIB) $(BN512_SLIB) $(SHE_LIB_ALL) $(SHA256_LIB)
 ECDSA_LIB=$(LIB_DIR)/libmclecdsa.a
 
 #LLVM_VER=-3.8
@@ -278,6 +280,11 @@ ECDSA_OBJ=$(OBJ_DIR)/ecdsa_c.o
 $(ECDSA_LIB): $(ECDSA_OBJ)
 	$(AR) $(ARFLAGS) $@ $(ECDSA_OBJ)
 
+SHA256_OBJ=$(OBJ_DIR)/sha256.o
+$(SHA256_LIB): $(SHA256_OBJ)
+	$(AR) $(ARFLAGS) $@ $(SHA256_OBJ)
+
+
 src/base64m.ll: $(GEN_EXE)
 	$(GEN_EXE) $(GEN_EXE_OPT) -wasm > $@
 
@@ -374,6 +381,10 @@ $(EXE_DIR)/paillier_test.exe: $(OBJ_DIR)/paillier_test.o $(MCL_LIB)
 
 $(EXE_DIR)/bint_test.exe: $(OBJ_DIR)/bint_test.o $(MCL_LIB)
 	$(PRE)$(CXX) $< -o $@ $(MCL_LIB) $(LDFLAGS) -lgmp -lgmpxx
+
+$(EXE_DIR)/bls_katzwang_sig.exe: $(OBJ_DIR)/bls_katzwang_sig.o $(MCL_LIB)
+	$(PRE)$(CXX) $< -o $@ $(MCL_LIB) $(SHA256_LIB) $(LDFLAGS)
+
 
 SAMPLE_EXE=$(addprefix $(EXE_DIR)/,$(addsuffix .exe,$(basename $(SAMPLE_SRC))))
 sample: $(SAMPLE_EXE) $(MCL_LIB)

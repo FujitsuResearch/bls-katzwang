@@ -1,3 +1,23 @@
+# How to use two-round tight paring multi-signature with key aggregation
+
+## Setup for mcl
+$ git clone https://github.com/herumi/mcl
+$ cd mcl
+$ make -j4 CXX=clang++
+$ mkdir build
+$ cd build
+$ cmake .. -DCMAKE_CXX_COMPILER=clang++
+$ make
+$ cd ../bin
+$ cmake .. -DBUILD_TESTING=ON
+$ make -j4
+
+## bls_katzwang_sig
+(Any modification in `bls_katzwang_sig.cpp`)
+$ g++ -c sample/SHA256.cpp -o lib/libsha256.a -I./include
+$ make bin/bls_katzwang_sig.exe
+
+
 [![Build Status](https://github.com/herumi/mcl/actions/workflows/main.yml/badge.svg)](https://github.com/herumi/mcl/actions/workflows/main.yml)
 
 # mcl
