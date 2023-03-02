@@ -82,7 +82,7 @@ void AggSig(G1& sigma_agg, const std::vector<G1>& sigma_list)
 	}
 }
 
-void AggKey(G2& pk_agg, const std::vector<G2>& pk_list, const std::vector<G1>& pi_list, const G2& Q){
+void KeyCheck(const std::vector<G2>& pk_list, const std::vector<G1>& pi_list, const G2& Q){
 	// Check proof of possession
 	int i;
 	int N = pk_list.size();
@@ -99,6 +99,9 @@ void AggKey(G2& pk_agg, const std::vector<G2>& pk_list, const std::vector<G1>& p
 			std::exit(0);
 		}
 	}
+}
+
+void AggKey(G2& pk_agg, const std::vector<G2>& pk_list){
 	// Compute pk_agg
 	pk_agg.clear();
 	for(auto& pk: pk_list){
@@ -173,11 +176,21 @@ int main()
 		r.setRand();
 		r_list.push_back(r);
 	}
+	end = std::chrono::system_clock::now();
+	dur = end - start;
+	msec = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
+	std::cout << "Round1 Time (generate seed): " << msec << " [ms]" << std::endl;
 
 	//Round 2
+	start = std::chrono::system_clock::now();
 	h = compute_h(m, pk_list, r_list); // h = H(m || pk1 || ... || pk_N || r_1 || ... || r_N)
+	end = std::chrono::system_clock::now();
+	dur = end - start;
+	msec = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
+	std::cout << "Round2 Time (compute h): " << msec << " [ms]" << std::endl;
 
-	//Round 3
+	//Compute Sigma
+	start = std::chrono::system_clock::now();
 	for(i = 0; i < N; i++ ){
 		// Sign
 		G1 sigma;
@@ -187,16 +200,24 @@ int main()
 		// for debug
 		// std::cout << "msg: " << m << std::endl;
 		// std::cout << "signature: " << sigma << ", " << h << std::endl;
-		
-		// // Individual signatures verify
-		// G2 pk = pk_list[i];
-		// bool ok = Verify(sigma, h, Q, pk, m);
-		// std::cout << "verification result :" << (ok ? "Success" : "Failed") << std::endl;
 	}
 	end = std::chrono::system_clock::now();
 	dur = end - start;
 	msec = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
-	std::cout << "Signing Time: " << msec << " [ms]" << std::endl;
+	std::cout << "Compute Sigma Time (compute h): " << msec << " [ms]" << std::endl;
+
+		// Individual signatures verify
+	start = std::chrono::system_clock::now();
+	for(i = 0; i < N; i++ ){
+		G2 pk = pk_list[i];
+		G1 sigma = sigma_list[i];
+		bool ok = Verify(sigma, h, Q, pk, m);
+		//std::cout << "verification result :" << (ok ? "Success" : "Failed") << std::endl;
+	}
+	end = std::chrono::system_clock::now();
+	dur = end - start;
+	msec = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
+	std::cout << "Individual Verification Time: " << msec << " [ms]" << std::endl;
 	
 	// Aggregate Signature
 	G1 sigma_agg;
@@ -210,15 +231,23 @@ int main()
 	// for debug
 	//std::cout << "aggregated signature: " << sigma_agg << std::endl;
 
-	// Aggregated Publickey
+	// Aggregate Publickey
+	// Key Check
 	G2 pk_agg;
 	start = std::chrono::system_clock::now();
-	AggKey(pk_agg, pk_list, pi_list, Q);
+	KeyCheck(pk_list, pi_list, Q);
+	end = std::chrono::system_clock::now();
+	dur = end - start;
+	msec = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
+	std::cout << "Key Check (PoPs) Time: " << msec << " [ms]" << std::endl;
+	// Aggregation
+	start = std::chrono::system_clock::now();
+	AggKey(pk_agg, pk_list);
 	end = std::chrono::system_clock::now();
 	dur = end - start;
 	msec = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
 	std::cout << "Key Aggregation Time: " << msec << " [ms]" << std::endl;
-	
+
 	// for debug
 	// std::cout << "aggregated public key: " << pk_agg << std::endl;
 
