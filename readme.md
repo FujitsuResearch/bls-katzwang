@@ -34,3 +34,7 @@ $ make bin/bls_katzwang_sig.exe
 
 - BLS Signature: https://github.com/herumi/mcl
 - SHA256: https://github.com/System-Glitch/SHA256
+
+## License
+
+- For sample/bls_katzwang_sig.cpp: BSD 3-Clause Clear
