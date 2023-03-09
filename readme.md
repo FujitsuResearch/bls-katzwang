@@ -34,8 +34,8 @@ $ make bin/bls_katzwang_sig.exe
 ```
 ## Reference
 
-- BLS Signature: https://github.com/herumi/mcl
-- SHA256: https://github.com/System-Glitch/SHA256
+- This repository is forked from [herumi/mcl](https://github.com/herumi/mcl).
+- sample/SHA256.cpp and include/SHA256.h are included in [System-Glitch/SHA256](https://github.com/System-Glitch/SHA256).
 
 ## License
 
