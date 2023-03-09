@@ -8,12 +8,14 @@
 
 - `$ sudo apt install libgmp-dev`
 - `$ sudo apt install cmake`
+- `$ sudo apt install clang`
 
-## Setup mcl (for Windows)
+
+## Setup mcl (for WSL on Windows)
 
 ```
-$ git clone https://github.com/aroha3/mcl-with-katz-wang
-$ cd mcl
+$ git clone https://github.com/FujitsuResearch/bls-katzwang
+$ cd bls-katzwang
 $ make -j4 CXX=clang++
 $ mkdir build
 $ cd build
