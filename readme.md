@@ -29,8 +29,23 @@ $ make -j4
 
 (After any modification in `bls_katzwang_sig.cpp`)
 ```
-$ g++ -c sample/SHA256.cpp -o lib/libsha256.a -I./include
+$ g++ -c sample/SHA256.cpp -o lib/libsha256.s -I./include
 $ make bin/bls_katzwang_sig.exe
+$ ./bls/bls_katzwang_sig.exe
+Type your message.
+aaa
+Type the number of signers.
+10
+KeyGen Time: 2 [ms]
+Round1 Time (generate seed): 0 [ms]
+Round2 Time (compute h): 0 [ms]
+Compute Sigma Time (compute h): 0 [ms]
+Individual Verification Time: 6 [ms]
+Signature Aggregation Time: 0 [ms]
+Key Check (PoPs) Time: 11 [ms]
+Key Aggregation Time: 0 [ms]
+Verification Time: 0 [ms]
+verification result :Success
 ```
 ## Reference
 
